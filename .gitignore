@@ -1,0 +1,16 @@
+venv/
+__pycache__/
+*.pyc
+.env
+logs/*.log
+database/*.db
+plant_disease.db
+static/uploads/*
+static/gradcam/*
+!static/uploads/.gitkeep
+!static/gradcam/.gitkeep
+!ai_model/model.onnx
+!ai_model/model.onnx.data
+!ai_model/metadata.json
+!ai_model/labels.txt
+!ai_model/.gitkeep
