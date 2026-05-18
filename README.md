@@ -1,6 +1,6 @@
 <div align="center">
 
-![Project banner — animated gradient and highlights](assets/readme-banner.svg)
+<img src="assets/project-banner.png" alt="Plant Disease Detector — smart technology for healthy plants: AI-powered leaf analysis, disease detection, and crop protection" width="920" style="max-width:100%; height:auto;" />
 
 ### Smart tomato leaf diagnostics in the browser
 
@@ -161,7 +161,8 @@ plant-disease-detector/
 ├── .env                    # Local secrets (never commit)
 ├── .env.example            # Safe template for production
 ├── assets/
-│   └── readme-banner.svg   # README header art
+│   ├── project-banner.png    # README hero (your brand banner)
+│   └── readme-banner.svg     # Optional compact animated header
 ├── ai_model/
 │   ├── model.onnx          # Your exported classifier
 │   ├── model.onnx.data     # Optional external weights
@@ -407,6 +408,6 @@ Plain ONNX Runtime does **not** expose training-time gradients for most exported
 
 <br/>
 
-<sub>Banner SVG uses SMIL animation; GitHub renders it in the README file view. If motion does not appear, open <code>assets/readme-banner.svg</code> locally in a browser.</sub>
+<sub>Hero image: <code>assets/project-banner.png</code>. Optional animated strip: <code>assets/readme-banner.svg</code>.</sub>
 
 </div>
