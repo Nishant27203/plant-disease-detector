@@ -65,7 +65,9 @@ class Config:
 
     REQUIRE_API_KEY = os.getenv("REQUIRE_API_KEY", "0") == "1"
     API_KEY = os.getenv("API_KEY", "")
-    GRADCAM_GRID_SIZE = int(os.getenv("GRADCAM_GRID_SIZE", "7"))
+    GRADCAM_GRID_SIZE = int(os.getenv("GRADCAM_GRID_SIZE", "10"))
+    GRADCAM_MAX_PATCHES = int(os.getenv("GRADCAM_MAX_PATCHES", "384"))
+    GRADCAM_BATCH_CHUNK = int(os.getenv("GRADCAM_BATCH_CHUNK", "48"))
 
 
 class DevelopmentConfig(Config):

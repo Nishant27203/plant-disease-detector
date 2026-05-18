@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import mimetypes
+import os
+import sys
 
 from flask import Flask
 
@@ -45,4 +47,7 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=app.config["DEBUG"])
+    # macOS often binds AirPlay to 5000; local dev defaults to 5001 there.
+    default_port = 5001 if sys.platform == "darwin" else 5000
+    port = int(os.environ.get("PORT", str(default_port)))
+    app.run(host="0.0.0.0", port=port, debug=app.config["DEBUG"])
