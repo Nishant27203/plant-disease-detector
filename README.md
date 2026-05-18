@@ -1,147 +1,326 @@
-# Tomato Leaf Disease Detector
+<div align="center">
 
-Production-ready beginner-friendly Flask web app for tomato leaf disease detection using a trained MobileNetV4 ONNX model.
+![Project banner — animated gradient and highlights](assets/readme-banner.svg)
 
-## What This Project Includes
+### Smart tomato leaf diagnostics in the browser
 
-- Flask backend with modular routes, services, utilities, and SQLAlchemy models
-- ONNX Runtime inference with the model loaded once at startup
-- OpenCV/Pillow preprocessing: CLAHE, bilateral filtering, HSV leaf segmentation, resize, normalization
-- Confidence score and top-3 predictions
-- Grad-CAM-style heatmap generation saved under `static/gradcam`
-- SQLite prediction history
-- Responsive HTML/CSS/vanilla JavaScript frontend
-- Render/Railway compatible deployment files
+**Upload a leaf photo → ONNX inference → confidence, top predictions, treatment hints, and an explainability heatmap — all saved to SQLite history.**
 
-## Folder Structure
+<br/>
+
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.x-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![ONNX Runtime](https://img.shields.io/badge/ONNX_Runtime-1.20+-005CED?style=for-the-badge&logo=onnx&logoColor=white)](https://onnxruntime.ai/)
+[![OpenCV](https://img.shields.io/badge/OpenCV-headless-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white)](https://opencv.org/)
+[![SQLite](https://img.shields.io/badge/SQLite-history-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+
+<br/>
+
+[![Deploy: Render](https://img.shields.io/badge/Deploy-Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://render.com/)
+[![Deploy: Railway](https://img.shields.io/badge/Deploy-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)](https://railway.app/)
+
+</div>
+
+---
+
+## Table of contents
+
+| | |
+|:---:|:---|
+| **1** | [Why this project](#why-this-project) |
+| **2** | [Feature tour](#feature-tour) |
+| **3** | [Architecture at a glance](#architecture-at-a-glance) |
+| **4** | [How a request flows](#how-a-request-flows) |
+| **5** | [Tech stack](#tech-stack) |
+| **6** | [Folder structure](#folder-structure) |
+| **7** | [Local setup](#local-setup) |
+| **8** | [Environment variables](#environment-variables) |
+| **9** | [API reference](#api-reference) |
+| **10** | [Database schema](#database-schema) |
+| **11** | [Deployment](#deployment) |
+| **12** | [Production checklist](#production-checklist) |
+| **13** | [Grad-CAM note](#grad-cam-note) |
+
+---
+
+## Why this project
+
+This repository is a **production-minded, beginner-friendly** Flask application that turns a trained **MobileNetV4** classifier (exported to **ONNX**) into a full web experience: validated uploads, consistent preprocessing, JSON APIs, HTML pages, optional API-key protection, and **Grad-CAM–style** overlays so predictions are not just a label — they come with **visual context** and **actionable treatment text** where available.
+
+---
+
+## Feature tour
+
+| Area | What you get |
+|------|----------------|
+| **Inference** | ONNX Runtime loads **once** at startup; fast CPU-friendly predictions. |
+| **Preprocessing** | OpenCV + Pillow: CLAHE, bilateral filtering, HSV leaf segmentation, resize, normalization (`imagenet` or `0..1`). |
+| **Results** | Primary label, **confidence**, **severity**, **top-3** alternatives, treatment and solution strings. |
+| **Explainability** | Heatmaps saved under `static/gradcam` (occlusion-style method compatible with standard ONNX classifiers). |
+| **History** | SQLite + SQLAlchemy — browse the latest predictions from the UI or API. |
+| **Frontend** | Responsive **HTML / CSS / vanilla JS** — no heavy SPA build step. |
+| **Ops** | `Procfile`, `runtime.txt`, and **Gunicorn**-ready commands for **Render** and **Railway**. |
+
+---
+
+## Architecture at a glance
+
+```mermaid
+flowchart TB
+    subgraph Client["Browser / API client"]
+        U[Upload UI]
+        H[History UI]
+        A[REST calls]
+    end
+
+    subgraph Flask["Flask application"]
+        P[Pages blueprint]
+        J[API blueprint]
+        M[ModelService — ONNX]
+        I[Image pipeline]
+        G[Grad-CAM service]
+        D[(SQLite)]
+    end
+
+    U --> P
+    H --> P
+    A --> J
+    P --> M
+    J --> M
+    M --> I
+    M --> G
+    J --> D
+    P --> D
+```
+
+---
+
+## How a request flows
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Flask
+    participant Image as Image service
+    participant ONNX as ONNX Runtime
+    participant GC as Grad-CAM service
+    participant DB as SQLite
+
+    User->>Flask: POST /api/detect (multipart image)
+    Flask->>Image: validate + preprocess
+    Image->>ONNX: tensor / batch
+    ONNX-->>Flask: logits + probs
+    Flask->>GC: build heatmap overlay
+    GC-->>Flask: saved gradcam path
+    Flask->>DB: persist prediction row
+    Flask-->>User: JSON + paths for UI
+```
+
+---
+
+## Tech stack
+
+```mermaid
+mindmap
+  root((Plant Disease<br/>Detector))
+    Runtime
+      Python 3.10+
+      Gunicorn
+    Web
+      Flask 3
+      Jinja templates
+    ML
+      ONNX Runtime
+      MobileNetV4 ONNX
+    Vision
+      OpenCV headless
+      Pillow
+    Data
+      Flask-SQLAlchemy
+      SQLite
+    Quality
+      Structured logging
+      Security headers
+      Centralized errors
+```
+
+---
+
+## Folder structure
+
+<details>
+<summary><strong>Expand full tree</strong> — same layout as the repo on disk</summary>
 
 ```text
 plant-disease-detector/
-|-- app.py                  # Flask application factory and startup
-|-- config.py               # Environment-based configuration
-|-- requirements.txt        # Python dependencies
-|-- Procfile                # Gunicorn web command for Render/Railway
-|-- runtime.txt             # Python runtime for supported hosts
-|-- .env                    # Local development environment variables
-|-- .env.example            # Safe production environment template
-|-- ai_model/
-|   `-- model.onnx          # Put your trained MobileNetV4 ONNX model here
-|-- database/
-|   |-- extensions.py       # SQLAlchemy extension instance
-|   `-- init_db.py          # Optional manual database initialization
-|-- models/
-|   `-- prediction.py       # Prediction history table schema
-|-- routes/
-|   |-- api.py              # JSON APIs
-|   `-- pages.py            # HTML page routes
-|-- services/
-|   |-- disease_service.py  # Disease metadata and treatment suggestions
-|   |-- gradcam_service.py  # Heatmap generation
-|   |-- image_service.py    # Image validation and preprocessing pipeline
-|   |-- model_service.py    # ONNX Runtime model loading and inference
-|   `-- storage_service.py  # Secure upload saving
-|-- utils/
-|   |-- error_handlers.py   # Sanitized API/page errors
-|   |-- errors.py           # Custom exceptions
-|   |-- logging_config.py   # Rotating file logging
-|   |-- security.py         # Security headers and optional API key
-|   `-- validators.py       # Upload validation
-|-- static/
-|   |-- css/styles.css      # Responsive agriculture-themed UI
-|   |-- js/app.js           # Upload and detection behavior
-|   |-- js/result.js        # Result page rendering
-|   |-- js/history.js       # History page rendering
-|   |-- uploads/            # Saved user uploads
-|   `-- gradcam/            # Saved heatmap overlays
-`-- templates/
-    |-- base.html
-    |-- index.html
-    |-- result.html
-    |-- history.html
-    `-- error.html
+├── app.py                  # Application factory + model warmup
+├── config.py               # Environment-driven settings
+├── requirements.txt
+├── Procfile                # Gunicorn for PaaS
+├── runtime.txt             # Python version pin for hosts
+├── .env                    # Local secrets (never commit)
+├── .env.example            # Safe template for production
+├── assets/
+│   └── readme-banner.svg   # README header art
+├── ai_model/
+│   ├── model.onnx          # Your exported classifier
+│   ├── model.onnx.data     # Optional external weights
+│   ├── metadata.json
+│   └── labels.txt
+├── database/
+│   ├── extensions.py
+│   ├── init_db.py
+│   └── plant_disease.db    # Created at runtime (gitignored)
+├── models/
+│   └── prediction.py       # History table
+├── routes/
+│   ├── api.py              # JSON endpoints
+│   └── pages.py            # HTML routes
+├── services/
+│   ├── disease_service.py  # Metadata + treatment copy
+│   ├── gradcam_service.py
+│   ├── image_service.py
+│   ├── model_service.py
+│   └── storage_service.py
+├── utils/
+│   ├── error_handlers.py
+│   ├── errors.py
+│   ├── logging_config.py
+│   ├── security.py
+│   └── validators.py
+├── static/
+│   ├── css/styles.css
+│   ├── js/app.js | result.js | history.js
+│   ├── uploads/
+│   └── gradcam/
+├── templates/
+│   ├── base.html
+│   ├── index.html
+│   ├── result.html
+│   ├── history.html
+│   └── error.html
+├── scripts/
+│   └── export_checkpoint_to_onnx.py
+├── outputs_mobilenetv4_android_final/   # Optional: PyTorch checkpoint
+└── tomato-leaf.ipynb
 ```
 
-## Local Setup
+</details>
 
-1. Create and activate a virtual environment.
+---
+
+## Local setup
+
+<details>
+<summary><strong>Step 1 — Virtual environment</strong></summary>
+
+**macOS / Linux**
 
 ```bash
-python -m venv venv
-venv\Scripts\activate
+python3 -m venv venv
+source venv/bin/activate
 ```
 
-2. Install dependencies.
+**Windows (cmd)**
+
+```bat
+python -m venv venv
+venv\Scripts\activate.bat
+```
+
+**Windows (PowerShell)**
+
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
+
+</details>
+
+<details>
+<summary><strong>Step 2 — Install dependencies</strong></summary>
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Copy your trained ONNX model to:
+</details>
+
+<details>
+<summary><strong>Step 3 — Model files</strong></summary>
+
+Place your trained ONNX export at:
 
 ```text
 ai_model/model.onnx
 ```
 
-Your notebook exported the model on Kaggle to:
+If your export split weights into a sidecar file, keep **`model.onnx.data`** next to `model.onnx` — ONNX Runtime expects both.
+
+**From Kaggle (example path from training):**
 
 ```text
 /kaggle/working/outputs_mobilenetv4_android_final/android_export/mobilenetv4_conv_medium.onnx
 ```
 
-Download that file from the Kaggle notebook output, place it in `ai_model`, and rename it to `model.onnx`.
+Download, move into `ai_model/`, and rename to `model.onnx` if needed.
 
-If ONNX export creates a second file named `model.onnx.data`, keep it beside `model.onnx`. ONNX Runtime needs both files.
+**From PyTorch checkpoint instead**
 
-If you download the PyTorch checkpoint instead, put `best.pt` at:
+Put `best.pt` under:
 
 ```text
 outputs_mobilenetv4_android_final/best.pt
 ```
 
-Then install export-only packages and run:
+Then:
 
 ```bash
 pip install torch timm onnx
 python scripts/export_checkpoint_to_onnx.py
 ```
 
-4. Confirm `.env` settings. Most projects can keep:
+</details>
 
-```text
-MODEL_PATH=ai_model/model.onnx
-IMAGE_SIZE=224
-NORMALIZATION_MODE=imagenet
-```
+<details>
+<summary><strong>Step 4 — Environment & run</strong></summary>
 
-If your model was trained with `0..1` normalization instead of ImageNet normalization, set:
-
-```text
-NORMALIZATION_MODE=zero_one
-```
-
-5. Run the app.
+Copy `.env.example` to `.env` and adjust values (see [Environment variables](#environment-variables)).
 
 ```bash
 python app.py
 ```
 
-Open:
+Open **[http://127.0.0.1:5000](http://127.0.0.1:5000)**.
 
-```text
-http://127.0.0.1:5000
-```
+</details>
 
-## API Endpoints
+---
+
+## Environment variables
+
+| Variable | Role |
+|----------|------|
+| `FLASK_ENV` | `development` vs `production` behaviour. |
+| `FLASK_DEBUG` | Toggle Flask debug (keep `0` in production). |
+| `SECRET_KEY` | Session / signing secret — use a long random string in production. |
+| `MODEL_PATH` | Path to ONNX model (default `ai_model/model.onnx`). |
+| `MAX_UPLOAD_MB` | Upper bound for uploaded images. |
+| `IMAGE_SIZE` | Square input size (e.g. `224`). |
+| `NORMALIZATION_MODE` | `imagenet` or `zero_one` — **must match training**. |
+| `REQUIRE_API_KEY` | Set to `1` to require `X-API-Key` on APIs. |
+| `API_KEY` | Shared secret when API key mode is enabled. |
+| `GRADCAM_GRID_SIZE` | Grid density for occlusion-style maps. |
+
+---
+
+## API reference
 
 ### `POST /api/detect`
 
-Multipart form upload:
+Multipart form field: **`image`** (leaf photo).
 
-```text
-image=<leaf image>
-```
-
-Response:
+**Example response**
 
 ```json
 {
@@ -156,69 +335,78 @@ Response:
 }
 ```
 
-### `GET /api/result/<session_id>`
+| Method | Path | Purpose |
+|--------|------|---------|
+| `GET` | `/api/result/<session_id>` | Fetch one saved prediction. |
+| `GET` | `/api/history` | Latest **50** predictions. |
+| `GET` | `/api/health` | Model + database readiness probe. |
 
-Fetch one saved prediction.
+---
 
-### `GET /api/history`
+## Database schema
 
-Fetch the latest 50 predictions.
-
-### `GET /api/health`
-
-Check model and database readiness.
-
-## Database
-
-SQLite is configured through SQLAlchemy and created automatically on startup at:
+SQLite file (created automatically):
 
 ```text
 database/plant_disease.db
 ```
 
-Stored fields include:
+**Columns stored per prediction**
 
-- `id`
-- `session_id`
-- `image_path`
-- `disease_name`
-- `confidence_score`
-- `severity`
-- `treatment`
-- `solution`
-- `top_predictions`
-- `gradcam_path`
-- `prediction_time`
-- `created_at`
+`id` · `session_id` · `image_path` · `disease_name` · `confidence_score` · `severity` · `treatment` · `solution` · `top_predictions` · `gradcam_path` · `prediction_time` · `created_at`
 
-## Deployment on Render
+---
 
-1. Push this project to GitHub.
-2. Create a new Render Web Service.
-3. Use these settings:
-   - Build command: `pip install -r requirements.txt`
-   - Start command: `gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120`
-4. Add environment variables from `.env.example`.
-5. Upload/include `ai_model/model.onnx` in your repository or use a private deployment artifact.
-6. Deploy.
+## Deployment
 
-## Deployment on Railway
+<details>
+<summary><strong>Render</strong></summary>
 
-1. Create a Railway project from your GitHub repo.
-2. Railway will detect the `Procfile`.
-3. Add environment variables from `.env.example`.
-4. Ensure `ai_model/model.onnx` is available in the deployed project.
-5. Deploy and open the generated Railway URL.
+1. Push this repository to GitHub.
+2. Create a **Web Service** on Render.
+3. **Build:** `pip install -r requirements.txt`
+4. **Start:** `gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120`
+5. Add environment variables from `.env.example`.
+6. Ensure `ai_model/model.onnx` is available in the deployment (repo artifact or secure upload).
 
-## Production Notes
+</details>
 
-- Set `FLASK_ENV=production` and `FLASK_DEBUG=0`.
-- Replace `SECRET_KEY` with a long random value.
-- Keep `.env` out of git. Use host environment variables in production.
-- For basic API protection, set `REQUIRE_API_KEY=1` and provide `API_KEY`; clients must send `X-API-Key`.
-- Use `opencv-python-headless` for smaller server deployments.
-- The app uses one Gunicorn worker by default so the ONNX model is loaded once per process and RAM stays low.
+<details>
+<summary><strong>Railway</strong></summary>
 
-## Grad-CAM Note
+1. New project from the GitHub repository.
+2. Railway picks up the **`Procfile`**.
+3. Set environment variables from `.env.example`.
+4. Confirm the ONNX bundle is present in the deployed filesystem.
+5. Deploy and use the generated URL.
 
-Plain ONNX Runtime does not expose training gradients from most exported classification models. This app generates a class-specific heatmap using a fast occlusion-based Grad-CAM-style method that works with standard ONNX classifiers. If you export a model with feature-map outputs or keep a PyTorch/TensorFlow training graph, you can swap `services/gradcam_service.py` for true gradient Grad-CAM.
+</details>
+
+---
+
+## Production checklist
+
+- [ ] `FLASK_ENV=production` and `FLASK_DEBUG=0`
+- [ ] Strong, unique `SECRET_KEY`
+- [ ] `.env` never committed; use host env vars
+- [ ] Optional: `REQUIRE_API_KEY=1` + rotate `API_KEY`
+- [ ] Prefer **`opencv-python-headless`** on servers (already in `requirements.txt`)
+- [ ] **One Gunicorn worker** keeps a single in-process ONNX model — predictable RAM
+
+---
+
+## Grad-CAM note
+
+Plain ONNX Runtime does **not** expose training-time gradients for most exported classifiers. This app uses a **fast occlusion-based, Grad-CAM–style** visual that works with standard ONNX classification heads. If you export intermediate feature maps or keep a PyTorch graph with gradients, you can replace `services/gradcam_service.py` with true gradient Grad-CAM.
+
+---
+
+<div align="center">
+
+**Built for learners and shippers alike — ship a model, ship a product.**
+
+<br/>
+
+<sub>Banner SVG uses SMIL animation; GitHub renders it in the README file view. If motion does not appear, open <code>assets/readme-banner.svg</code> locally in a browser.</sub>
+
+</div>
