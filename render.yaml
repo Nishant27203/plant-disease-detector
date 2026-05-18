@@ -1,0 +1,35 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# Deploy: Dashboard → New → Blueprint → connect this repo, or use the link in README.
+services:
+  - type: web
+    name: plant-disease-detector
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
+    healthCheckPath: /api/health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: "0"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: MODEL_PATH
+        value: ai_model/model.onnx
+      - key: IMAGE_SIZE
+        value: "224"
+      - key: NORMALIZATION_MODE
+        value: imagenet
+      - key: MAX_UPLOAD_MB
+        value: "8"
+      - key: REQUIRE_API_KEY
+        value: "0"
+      - key: GRADCAM_GRID_SIZE
+        value: "10"
+      # Lower patch budget on free CPU to keep /api/detect responsive
+      - key: GRADCAM_MAX_PATCHES
+        value: "256"
+      - key: GRADCAM_BATCH_CHUNK
+        value: "32"
