@@ -7,7 +7,7 @@ from flask import Blueprint, current_app, jsonify, request
 
 from database.extensions import db
 from models.prediction import Prediction
-from services.disease_service import get_disease_details
+from services.disease_service import get_bilingual_snapshot, normalize_lang
 from services.gradcam_service import GradCAMService
 from services.image_service import ImageService
 from services.storage_service import save_upload
@@ -36,7 +36,8 @@ def detect():
 
     try:
         prediction = model_service.predict(image_input.tensor)
-        details = get_disease_details(prediction.label)
+        snapshot = get_bilingual_snapshot(prediction.label)
+        details = snapshot["en"]
         gradcam_path = GradCAMService(current_app.config).generate(
             model_service=model_service,
             image_input=image_input,
@@ -48,11 +49,13 @@ def detect():
             session_id=session_id,
             image_path=saved.static_path,
             gradcam_path=gradcam_path,
+            disease_key=prediction.label,
             disease_name=details["name"],
             confidence_score=prediction.confidence,
             severity=details["severity"],
             treatment=details["treatment"],
             solution=details["solution"],
+            recommendation_snapshot=snapshot,
             top_predictions=prediction.top_predictions,
             prediction_time=prediction.prediction_time,
         )
@@ -64,7 +67,7 @@ def detect():
         current_app.logger.exception("Prediction failed")
         raise AppError("Prediction failed. Please try another clear tomato leaf image.") from exc
 
-    payload = record.to_dict()
+    payload = record.to_dict(lang=normalize_lang(request.args.get("lang")))
     payload["success"] = True
     return jsonify(payload), 201
 
@@ -75,7 +78,7 @@ def api_result(session_id: str):
     if not record:
         raise ValidationError("Prediction result was not found.", status_code=404)
 
-    payload = record.to_dict()
+    payload = record.to_dict(lang=normalize_lang(request.args.get("lang")))
     payload["success"] = True
     return jsonify(payload)
 
@@ -88,7 +91,8 @@ def api_history():
         current_app.logger.exception("Could not fetch prediction history")
         raise DatabaseError("Could not load prediction history right now.") from exc
 
-    return jsonify({"success": True, "items": [row.to_dict() for row in rows]})
+    lang = normalize_lang(request.args.get("lang"))
+    return jsonify({"success": True, "items": [row.to_dict(lang=lang) for row in rows]})
 
 
 @api_bp.get("/health")

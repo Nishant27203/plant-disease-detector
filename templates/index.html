@@ -1,62 +1,127 @@
 {% extends "base.html" %}
 
-{% block title %}Detect Tomato Leaf Disease{% endblock %}
+{% block title %}Tomato Leaf Disease Detector{% endblock %}
+{% block body_class %}page-home{% endblock %}
 {% block nav_home %}active{% endblock %}
 
 {% block content %}
-<section class="workspace">
-  <div class="intro-panel">
-    <p class="eyebrow">AI tomato leaf disease detection</p>
-    <h1>Upload a leaf image and get a field-ready diagnosis.</h1>
-    <p class="lead">
-      The backend preprocesses the image, runs your MobileNetV4 ONNX model, creates a heatmap, and stores the result for review.
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <p class="hero-badge">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8 6 4 8 4 13c0 4.4 3.6 8 8 8s8-3.6 8-8c0-5-4-7-8-11z" fill="currentColor"/></svg>
+      <span data-i18n="hero.badge">AI-POWERED DETECTION</span>
     </p>
-    <div class="metric-row">
-      <div><strong>224x224</strong><span>model input</span></div>
-      <div><strong>Top 3</strong><span>predictions</span></div>
-      <div><strong>SQLite</strong><span>history</span></div>
+    <h1 id="hero-title">
+      <span class="hero-line" data-i18n="hero.line1">Tomato Leaf</span>
+      <span class="hero-line hero-accent" data-i18n="hero.line2">Disease Detector</span>
+    </h1>
+    <p class="hero-lead" data-i18n="hero.lead">
+      Upload a photo of your tomato leaf and get instant AI-powered disease diagnosis with treatment recommendations.
+    </p>
+    <a class="button hero-cta" href="#upload">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8 6 4 8 4 13c0 4.4 3.6 8 8 8s8-3.6 8-8c0-5-4-7-8-11z" fill="currentColor"/></svg>
+      <span data-i18n="hero.cta">Scan a Leaf</span>
+    </a>
+  </div>
+</section>
+
+<section class="upload-section" id="upload" aria-labelledby="upload-title">
+  <div class="section-inner">
+    <h2 id="upload-title" class="section-title" data-i18n="upload.title">Upload Your Leaf</h2>
+    <p class="section-subtitle" data-i18n="upload.subtitle">Drag &amp; drop or capture a photo of a tomato leaf</p>
+
+    <form id="detectForm" class="upload-card">
+      <div id="dropZone" class="drop-zone">
+        <input id="imageInput" name="image" type="file" accept=".jpg,.jpeg,.png,.webp,image/*" hidden>
+
+        <span class="upload-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        </span>
+        <strong class="drop-title" data-i18n="upload.dropTitle">Drop your image here</strong>
+        <span class="drop-hint" data-i18n="upload.dropHint">JPG or PNG • Max 8MB</span>
+
+        <span class="drop-actions">
+          <button id="browseButton" class="button primary" type="button" data-i18n="upload.browse">Browse Files</button>
+          <button id="cameraButton" class="button outline" type="button" data-i18n="upload.camera">Use Camera</button>
+        </span>
+      </div>
+
+      <div id="previewPanel" class="preview-panel hidden">
+        <img id="previewImage" class="preview-image" alt="Selected tomato leaf preview">
+        <div class="preview-actions">
+          <button id="clearButton" class="button outline" type="button" disabled data-i18n="upload.clear">Clear</button>
+          <button id="detectButton" class="button primary" type="button" disabled>
+            <span class="button-spinner" aria-hidden="true"></span>
+            <span id="detectButtonText" data-i18n="upload.analyze">Analyze Leaf</span>
+          </button>
+        </div>
+      </div>
+
+      <p id="validationMessage" class="form-message" role="alert"></p>
+    </form>
+  </div>
+</section>
+
+<div id="cameraModal" class="camera-modal hidden" role="dialog" aria-modal="true" aria-labelledby="cameraModalTitle">
+  <div class="camera-modal-backdrop" data-camera-close></div>
+  <div class="camera-modal-panel">
+    <div class="camera-modal-header">
+      <h3 id="cameraModalTitle" data-i18n="camera.title">Take a Leaf Photo</h3>
+      <button type="button" class="camera-close" data-camera-close aria-label="Close">&times;</button>
+    </div>
+    <p class="camera-hint" data-i18n="camera.hint">Allow camera access when your browser asks. Hold the leaf steady in good light.</p>
+    <div class="camera-viewport">
+      <video id="cameraVideo" class="camera-video" autoplay playsinline muted></video>
+      <canvas id="cameraCanvas" class="hidden"></canvas>
+      <p id="cameraStatus" class="camera-status" data-i18n="camera.requesting">Requesting camera permission...</p>
+    </div>
+    <div class="camera-actions">
+      <button type="button" class="button outline" data-camera-close data-i18n="camera.cancel">Cancel</button>
+      <button type="button" id="captureButton" class="button primary" disabled data-i18n="camera.capture">Capture Photo</button>
     </div>
   </div>
+</div>
 
-  <section class="detect-panel" aria-labelledby="detect-title">
-    <div class="panel-heading">
-      <div>
-        <p class="eyebrow">Detect</p>
-        <h2 id="detect-title">Analyze a Tomato Leaf</h2>
-      </div>
-      <a class="ghost-link" href="/history">View history</a>
+<section class="how-section" aria-labelledby="how-title">
+  <div class="section-inner">
+    <h2 id="how-title" class="section-title" data-i18n="how.title">How It Works</h2>
+    <p class="section-subtitle" data-i18n="how.subtitle">Three simple steps to protect your crop</p>
+
+    <div class="steps-grid">
+      <article class="step-card">
+        <span class="step-badge">1</span>
+        <span class="step-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        </span>
+        <h3 data-i18n="how.step1.title">Upload Image</h3>
+        <p data-i18n="how.step1.text">Take a photo or upload an image of your tomato leaf.</p>
+      </article>
+
+      <article class="step-card">
+        <span class="step-badge">2</span>
+        <span class="step-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M9 9h6v6H9zM9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
+        </span>
+        <h3 data-i18n="how.step2.title">AI Analyzes</h3>
+        <p data-i18n="how.step2.text">Our deep learning model examines the leaf for signs of disease.</p>
+      </article>
+
+      <article class="step-card">
+        <span class="step-badge">3</span>
+        <span class="step-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        </span>
+        <h3 data-i18n="how.step3.title">Get Results</h3>
+        <p data-i18n="how.step3.text">Receive an instant diagnosis with treatment recommendations.</p>
+      </article>
     </div>
-
-    <form id="detectForm" class="detect-grid">
-      <div>
-        <label id="dropZone" class="drop-zone" for="imageInput">
-          <input id="imageInput" name="image" type="file" accept=".jpg,.jpeg,.png,.webp,image/*">
-          <span class="upload-icon">+</span>
-          <strong>Drop image here or browse</strong>
-          <span>JPG, JPEG, PNG, or WEBP up to your configured upload limit.</span>
-        </label>
-        <p id="validationMessage" class="form-message" role="alert"></p>
-      </div>
-
-      <div class="preview-shell">
-        <div id="emptyPreview" class="empty-preview">Image preview appears here</div>
-        <img id="previewImage" class="preview-image" alt="Selected tomato leaf preview">
-      </div>
-    </form>
-
-    <div class="action-bar">
-      <button id="clearButton" class="button secondary" type="button" disabled>Clear</button>
-      <button id="detectButton" class="button primary" type="button" disabled>
-        <span class="button-spinner" aria-hidden="true"></span>
-        <span id="detectButtonText">Run Detection</span>
-      </button>
-    </div>
-  </section>
-
-  <section id="inlineResult" class="result-preview hidden" aria-live="polite"></section>
+  </div>
 </section>
+
+<section id="inlineResult" class="inline-result hidden" aria-live="polite"></section>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/app.js', v='2') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js', v='6') }}"></script>
 {% endblock %}

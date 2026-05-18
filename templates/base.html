@@ -3,35 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Tomato Leaf AI{% endblock %}</title>
+  <title>{% block title %}LeafScan AI{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v='2') }}">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v='8') }}">
   {% block head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   <header class="site-header">
-    <a class="brand" href="/" aria-label="Tomato Leaf AI home">
-      <span class="brand-mark">T</span>
-      <span>Tomato Leaf AI</span>
+    <a class="brand" href="/" aria-label="LeafScan AI home">
+      <svg class="brand-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2C8 6 4 8 4 13c0 4.4 3.6 8 8 8s8-3.6 8-8c0-5-4-7-8-11z" fill="currentColor"/>
+      </svg>
+      <span data-i18n="brand.name">LeafScan AI</span>
     </a>
-    <nav class="nav-links" aria-label="Primary navigation">
-      <a href="/" class="{% block nav_home %}{% endblock %}">Detect</a>
-      <a href="/history" class="{% block nav_history %}{% endblock %}">History</a>
-    </nav>
+    <div class="header-actions">
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" data-lang="en" aria-pressed="true">EN</button>
+        <button type="button" data-lang="hi" aria-pressed="false">हिं</button>
+      </div>
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="/" class="{% block nav_home %}{% endblock %}" data-i18n="nav.detect">Detect</a>
+        <a href="/history" class="{% block nav_history %}{% endblock %}" data-i18n="nav.history">History</a>
+      </nav>
+    </div>
   </header>
 
   <main>
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="footer">
-    <span>MobileNetV4 + ONNX Runtime</span>
-    <span>SQLite history</span>
-    <span>Grad-CAM visualization</span>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <a class="footer-brand" href="/">
+        <svg class="brand-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2C8 6 4 8 4 13c0 4.4 3.6 8 8 8s8-3.6 8-8c0-5-4-7-8-11z" fill="currentColor"/>
+        </svg>
+        <span data-i18n="brand.name">LeafScan AI</span>
+      </a>
+      <p class="footer-tagline" data-i18n="footer.tagline">Built for farmers, gardeners &amp; researchers. Powered by deep learning for healthier crops.</p>
+      <p class="footer-credits" data-i18n="footer.credits">Made by Nishant Kumar &amp; Bhavya Agarwal</p>
+    </div>
+    <p class="footer-copy" data-i18n="footer.copy">&copy; 2026 LeafScan AI &middot; Nishant Kumar &amp; Bhavya Agarwal</p>
   </footer>
 
+  <script src="{{ url_for('static', filename='js/i18n.js', v='6') }}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

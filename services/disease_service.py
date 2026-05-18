@@ -1,84 +1,84 @@
 from __future__ import annotations
 
-
-DISEASE_LIBRARY = {
-    "Bacterial_spot": {
-        "name": "Bacterial Spot",
-        "severity": "High",
-        "treatment": "Copper-based bactericide",
-        "solution": "Remove infected leaves, avoid overhead watering, and apply a copper-based bactericide following the product label.",
-    },
-    "Early_blight": {
-        "name": "Early Blight",
-        "severity": "Medium",
-        "treatment": "Fungicide and pruning",
-        "solution": "Prune lower infected leaves, improve airflow, mulch soil, and apply a chlorothalonil or copper fungicide if spread continues.",
-    },
-    "Late_blight": {
-        "name": "Late Blight",
-        "severity": "High",
-        "treatment": "Urgent fungicide",
-        "solution": "Remove badly infected plants, keep foliage dry, and apply a late-blight fungicide immediately to protect nearby plants.",
-    },
-    "Leaf_Mold": {
-        "name": "Leaf Mold",
-        "severity": "Medium",
-        "treatment": "Humidity control and fungicide",
-        "solution": "Increase ventilation, reduce humidity, remove affected leaves, and use a labeled fungicide when needed.",
-    },
-    "Septoria_leaf_spot": {
-        "name": "Septoria Leaf Spot",
-        "severity": "Medium",
-        "treatment": "Fungicide and sanitation",
-        "solution": "Remove spotted leaves, clean plant debris, water at soil level, and apply a protective fungicide.",
-    },
-    "Spider_mites Two-spotted_spider_mite": {
-        "name": "Spider Mites",
-        "severity": "Medium",
-        "treatment": "Miticide or insecticidal soap",
-        "solution": "Spray leaf undersides with water, use insecticidal soap or neem oil, and repeat treatment to control new mites.",
-    },
-    "Target_Spot": {
-        "name": "Target Spot",
-        "severity": "Medium",
-        "treatment": "Fungicide and canopy management",
-        "solution": "Remove infected foliage, improve spacing and airflow, and apply a broad-spectrum fungicide if symptoms progress.",
-    },
-    "Tomato_Yellow_Leaf_Curl_Virus": {
-        "name": "Tomato Yellow Leaf Curl Virus",
-        "severity": "High",
-        "treatment": "Vector control",
-        "solution": "Remove infected plants, control whiteflies with sticky traps or insecticidal soap, and use resistant varieties in future planting.",
-    },
-    "Tomato_mosaic_virus": {
-        "name": "Tomato Mosaic Virus",
-        "severity": "High",
-        "treatment": "Sanitation",
-        "solution": "Remove infected plants, disinfect tools and hands, and avoid handling healthy plants after touching infected foliage.",
-    },
-    "healthy": {
-        "name": "Healthy Leaf",
-        "severity": "None",
-        "treatment": "No treatment required",
-        "solution": "The leaf appears healthy. Continue regular watering, balanced nutrition, and routine field monitoring.",
-    },
-    "powdery_mildew": {
-        "name": "Powdery Mildew",
-        "severity": "Medium",
-        "treatment": "Sulfur or potassium bicarbonate fungicide",
-        "solution": "Remove heavily affected leaves, improve airflow, avoid wet foliage, and apply a labeled powdery mildew treatment.",
-    },
-}
+from services.disease_data import DISEASE_LIBRARY
 
 
-def get_disease_details(label: str) -> dict:
-    if label in DISEASE_LIBRARY:
-        return DISEASE_LIBRARY[label]
+SUPPORTED_LANGS = {"en", "hi"}
 
-    readable = label.replace("Tomato___", "").replace("_", " ").strip().title()
+
+def normalize_lang(lang: str | None) -> str:
+    if not lang:
+        return "en"
+    code = lang.lower().strip().split("-")[0]
+    return code if code in SUPPORTED_LANGS else "en"
+
+
+def resolve_disease_key(label_or_name: str | None) -> str | None:
+    if not label_or_name:
+        return None
+    if label_or_name in DISEASE_LIBRARY:
+        return label_or_name
+    normalized = label_or_name.strip().lower()
+    for key, entry in DISEASE_LIBRARY.items():
+        for lang in SUPPORTED_LANGS:
+            if entry[lang]["name"].strip().lower() == normalized:
+                return key
+    return None
+
+
+def get_disease_details(label: str, lang: str = "en") -> dict:
+    lang = normalize_lang(lang)
+    resolved = resolve_disease_key(label) or label
+    entry = DISEASE_LIBRARY.get(resolved)
+
+    if not entry:
+        readable = label.replace("Tomato___", "").replace("_", " ").strip().title()
+        fallback = {
+            "name": readable or "Unknown Tomato Condition",
+            "severity": "Medium" if lang == "en" else "मध्यम",
+            "treatment": "Consult local extension guidance" if lang == "en" else "स्थानीय कृषि विभाग से सलाह लें",
+            "solution": (
+                "Isolate the plant, monitor symptom spread, and consult a local agriculture expert for confirmation."
+                if lang == "en"
+                else "पौधे को अलग रखें, लक्षण देखें, और स्थानीय कृषि विशेषज्ञ से पुष्टि कराएँ।"
+            ),
+            "symptoms": "",
+            "medicines": [],
+            "organic": [],
+            "prevention": [],
+            "when_to_apply": "",
+            "safety": "",
+            "expert_note": "",
+        }
+        return _pack_details(label, lang, fallback)
+
+    localized = entry[lang]
+    severity = entry["severity"][lang]
+    payload = {**localized, "severity": severity}
+    return _pack_details(resolved, lang, payload)
+
+
+def get_bilingual_snapshot(label: str) -> dict:
+    resolved = resolve_disease_key(label) or label
     return {
-        "name": readable or "Unknown Tomato Condition",
-        "severity": "Medium",
-        "treatment": "Consult local extension guidance",
-        "solution": "Isolate the plant, monitor symptom spread, and consult a local agriculture expert for confirmation.",
+        "en": get_disease_details(resolved, "en"),
+        "hi": get_disease_details(resolved, "hi"),
+    }
+
+
+def _pack_details(label: str, lang: str, payload: dict) -> dict:
+    return {
+        "disease_key": label,
+        "lang": lang,
+        "name": payload.get("name", ""),
+        "severity": payload.get("severity", ""),
+        "treatment": payload.get("treatment", ""),
+        "solution": payload.get("solution", ""),
+        "symptoms": payload.get("symptoms", ""),
+        "medicines": payload.get("medicines", []),
+        "organic": payload.get("organic", []),
+        "prevention": payload.get("prevention", []),
+        "when_to_apply": payload.get("when_to_apply", ""),
+        "safety": payload.get("safety", ""),
+        "expert_note": payload.get("expert_note", ""),
     }

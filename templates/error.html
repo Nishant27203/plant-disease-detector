@@ -1,14 +1,15 @@
 {% extends "base.html" %}
 
 {% block title %}Error{% endblock %}
+{% block body_class %}page-inner{% endblock %}
 
 {% block content %}
 <section class="page-wrap">
   <div class="error-card">
     <p class="eyebrow">Error {{ status_code or 500 }}</p>
-    <h1>We could not complete that request.</h1>
-    <p>{{ message or "Something went wrong. Please try again." }}</p>
-    <a class="button primary compact" href="/">Back to Detection</a>
+    <h1 class="section-title" data-i18n="error.title">We could not complete that request.</h1>
+    <p class="section-subtitle">{{ message or "Something went wrong. Please try again." }}</p>
+    <a class="button primary compact" href="/" data-i18n="error.back">Back to Detection</a>
   </div>
 </section>
 {% endblock %}

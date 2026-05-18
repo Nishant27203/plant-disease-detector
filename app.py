@@ -8,6 +8,7 @@ from flask import Flask
 
 from config import get_config
 from database.extensions import db
+from database.migrate import ensure_prediction_schema
 from routes.api import api_bp
 from routes.pages import pages_bp
 from services.model_service import ModelService
@@ -33,6 +34,7 @@ def create_app() -> Flask:
 
     with app.app_context():
         db.create_all()
+        ensure_prediction_schema()
         app.extensions["model_service"] = ModelService(app.config)
 
     app.register_blueprint(pages_bp)

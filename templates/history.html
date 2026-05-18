@@ -1,23 +1,24 @@
 {% extends "base.html" %}
 
 {% block title %}Prediction History{% endblock %}
+{% block body_class %}page-inner{% endblock %}
 {% block nav_history %}active{% endblock %}
 
 {% block content %}
 <section class="page-wrap">
-  <div class="panel-heading history-heading">
-    <div>
-      <p class="eyebrow">Saved predictions</p>
-      <h1>Prediction History</h1>
-    </div>
-    <a class="button primary compact" href="/">New Detection</a>
+  <div class="page-hero-mini">
+    <p class="eyebrow" data-i18n="history.eyebrow">Saved predictions</p>
+    <h1 class="section-title" data-i18n="history.title">Prediction History</h1>
+    <p class="section-subtitle" data-i18n="history.subtitle">Review your recent tomato leaf diagnoses</p>
+    <a class="button primary compact" href="/" data-i18n="history.new">New Detection</a>
   </div>
+
   <div id="historyList" class="history-list">
-    <div class="loading-card">Loading history...</div>
+    <div class="loading-card" data-i18n="result.loading">Loading...</div>
   </div>
 </section>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/history.js', v='2') }}"></script>
+<script src="{{ url_for('static', filename='js/history.js', v='4') }}"></script>
 {% endblock %}

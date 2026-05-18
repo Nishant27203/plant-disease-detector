@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Prediction Result{% endblock %}
+{% block body_class %}page-inner{% endblock %}
 
 {% block content %}
 <section class="page-wrap">
@@ -11,5 +12,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/result.js', v='2') }}"></script>
+<script src="{{ url_for('static', filename='js/result.js', v='7') }}"></script>
 {% endblock %}
