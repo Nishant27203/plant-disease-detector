@@ -8,6 +8,12 @@
 
 <br/>
 
+**[Live demo on Render](https://plant-disease-detector-l3sm.onrender.com)** · [Health check](https://plant-disease-detector-l3sm.onrender.com/api/health)
+
+<br/>
+
+[![Live Demo](https://img.shields.io/badge/Live_Demo-plant--disease--detector-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://plant-disease-detector-l3sm.onrender.com)
+
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.x-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![ONNX Runtime](https://img.shields.io/badge/ONNX_Runtime-1.20+-005CED?style=for-the-badge&logo=onnx&logoColor=white)](https://onnxruntime.ai/)
@@ -16,7 +22,7 @@
 
 <br/>
 
-[![Deploy: Render](https://img.shields.io/badge/Deploy-Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://render.com/)
+[![Deploy: Render](https://img.shields.io/badge/Deploy-Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://plant-disease-detector-l3sm.onrender.com)
 [![Deploy: Railway](https://img.shields.io/badge/Deploy-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)](https://railway.app/)
 
 </div>
@@ -361,10 +367,12 @@ database/plant_disease.db
 ## Deployment
 
 <details>
-<summary><strong>Render</strong></summary>
+<summary><strong>Render</strong> — [live app](https://plant-disease-detector-l3sm.onrender.com)</summary>
+
+**Live URL:** [https://plant-disease-detector-l3sm.onrender.com](https://plant-disease-detector-l3sm.onrender.com)
 
 1. Push this repository to GitHub.
-2. Create a **Web Service** on Render.
+2. Create a **Web Service** on Render (or use **`render.yaml`** Blueprint).
 3. **Build:** `pip install -r requirements.txt`
 4. **Start:** `gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120`
 5. Add environment variables from `.env.example`.
